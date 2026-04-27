@@ -7,6 +7,7 @@
 #include "Camera/CameraComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Components/T2AttributeComponent.h"
 
 // Sets default values
 AT2Character::AT2Character()
@@ -30,6 +31,11 @@ AT2Character::AT2Character()
 
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 720.0f, 0.0f);
+
+	GetCharacterMovement()->MaxWalkSpeed = NormalSpeed;
+
+	// Character Stat
+	AttributeComponent = CreateDefaultSubobject<UT2AttributeComponent>(TEXT("Attribute"));
 }
 
 // Called when the game starts or when spawned
@@ -54,6 +60,8 @@ void AT2Character::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Cyan, FString::Printf(TEXT("Stamina : %f"), AttributeComponent->GetBaseStamina()));
+	GEngine->AddOnScreenDebugMessage(2, 1.0f, FColor::Cyan, FString::Printf(TEXT("MaxWalkSpeed : %f"), GetCharacterMovement()->MaxWalkSpeed));
 }
 
 // Called to bind functionality to input
@@ -70,7 +78,21 @@ void AT2Character::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Triggered, this, &AT2Character::Sprinting);
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &AT2Character::StopSprint);
 	}
+}
+
+bool AT2Character::IsMoving() const
+{
+	UCharacterMovementComponent* MovementComp = GetCharacterMovement();
+	if (MovementComp)
+	{
+		return MovementComp->Velocity.Size2D() > 3.0f && MovementComp->GetCurrentAcceleration() != FVector::ZeroVector;
+	}
+
+	return false;
 }
 
 void AT2Character::Input_Move(const FInputActionValue& InputValue)
@@ -93,5 +115,31 @@ void AT2Character::Input_Look(const FInputActionValue& InputValue)
 
 	AddControllerYawInput(LookVector.X);
 	AddControllerPitchInput(LookVector.Y);
+}
+
+void AT2Character::Sprinting()
+{
+	check(AttributeComponent);
+
+	if (IsMoving() && AttributeComponent->CheckHasEnoughStamina(SprintingStamina))
+	{
+		GetCharacterMovement()->MaxWalkSpeed = SprintingSpeed;
+
+		AttributeComponent->ToggleStaminaRegen(false);
+		AttributeComponent->DecreaseStamina(SprintingStamina);
+	}
+	else
+	{
+		StopSprint();
+	}
+}
+
+void AT2Character::StopSprint()
+{
+	check(AttributeComponent);
+
+	GetCharacterMovement()->MaxWalkSpeed = NormalSpeed;
+
+	AttributeComponent->ToggleStaminaRegen(true, 1.0f);
 }
 
