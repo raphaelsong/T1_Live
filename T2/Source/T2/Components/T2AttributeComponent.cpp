@@ -41,6 +41,8 @@ bool UT2AttributeComponent::CheckHasEnoughStamina(float StaminaCost) const
 void UT2AttributeComponent::DecreaseStamina(float StaminaCost)
 {
 	BaseStamina = FMath::Clamp(BaseStamina - StaminaCost, 0.0f, MaxStamina);
+
+	BroadcastAttributeChanged(ET2AttributeType::Stamina);
 }
 
 void UT2AttributeComponent::ToggleStaminaRegen(bool bEnabled, float StartDelay)
@@ -62,9 +64,31 @@ void UT2AttributeComponent::RegenStaminaHandler()
 {
 	BaseStamina = FMath::Clamp(BaseStamina + StaminaRegenRate, 0.0f, MaxStamina);
 
+	BroadcastAttributeChanged(ET2AttributeType::Stamina);
+
 	if (BaseStamina >= MaxStamina)
 	{
 		ToggleStaminaRegen(false);
+	}
+}
+
+void UT2AttributeComponent::BroadcastAttributeChanged(ET2AttributeType InAttributeType) const
+{
+	if (OnAttributeChanged.IsBound())
+	{
+		float Ratio = 0.0f;
+		switch (InAttributeType)
+		{
+		case ET2AttributeType::Stamina:
+			Ratio = BaseStamina / MaxStamina;
+			break;
+		case ET2AttributeType::Health:
+			break;
+		default:
+			break;
+		}
+
+		OnAttributeChanged.Broadcast(InAttributeType, Ratio);
 	}
 }
 

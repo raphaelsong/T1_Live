@@ -8,6 +8,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Components/T2AttributeComponent.h"
+#include "UI/T2PlayerHUDWidget.h"
 
 // Sets default values
 AT2Character::AT2Character()
@@ -51,6 +52,16 @@ void AT2Character::BeginPlay()
 		if (Subsystem)
 		{
 			Subsystem->AddMappingContext(DefulatMappingContext, 0);
+		}
+	}
+
+	if (PlayerHUDWidgetClass)
+	{
+		PlayerHUDWidget = CreateWidget<UT2PlayerHUDWidget>(GetWorld(), PlayerHUDWidgetClass);
+
+		if (PlayerHUDWidget)
+		{
+			PlayerHUDWidget->AddToViewport();
 		}
 	}
 }

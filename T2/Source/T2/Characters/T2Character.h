@@ -36,6 +36,14 @@ public:
 public:
 	bool IsMoving() const;
 
+
+protected:
+	UPROPERTY(EditAnywhere, Category = UI)
+	TSubclassOf<UUserWidget> PlayerHUDWidgetClass;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = UI)
+	TObjectPtr<class UT2PlayerHUDWidget> PlayerHUDWidget;
+
 protected:
 	/** 질주 속도*/
 	UPROPERTY(EditAnywhere, Category = Sprinting)
